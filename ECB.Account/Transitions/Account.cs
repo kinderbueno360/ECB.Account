@@ -1,6 +1,7 @@
 ﻿using Boc.Domain.Events;
 using ECB.ClientAccount.Domain;
 using LaYumba.Functional;
+using static LaYumba.Functional.F;
 
 namespace ECB.ClientAccount.Transitions
 {
@@ -68,5 +69,13 @@ namespace ECB.ClientAccount.Transitions
                AlteredOverdraft e => acc with { AllowedOverdraft  = e.By },
                _ => throw new InvalidOperationException()
            };
+
+        public static Option<AccountState> From(IEnumerable<Event> history)
+               => history.Match(
+                  Empty: () => None,
+                  Otherwise: (createdEvent, otherEvents) => Some(
+                     otherEvents.Aggregate(
+                        seed: Account.Create((CreatedAccount)createdEvent),
+                        func: (state, evt) => state.Apply(evt))));
     }
 }
